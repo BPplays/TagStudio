@@ -13,6 +13,7 @@ import cv2
 import numpy as np
 import rawpy
 from mutagen import MutagenError, flac, id3, mp4
+import pillow_jxl
 from PIL import (
     Image,
     ImageChops,
