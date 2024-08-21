@@ -538,20 +538,24 @@ class PreviewPanel(QWidget):
                     # TODO: Do this all somewhere else, this is just here temporarily.
                     ext: str = filepath.suffix.lower()
                     try:
-                        if filepath.suffix.lower() in [".gif"]:
+                        if MediaType.IMAGE_ANIMATION in MediaCategories.get_types(ext):
                             movie = QMovie(str(filepath))
                             image = Image.open(str(filepath))
-                            self.preview_gif.setMovie(movie)
-                            self.resizeEvent(
-                                QResizeEvent(
-                                    QSize(image.width, image.height),
-                                    QSize(image.width, image.height),
-                                )
-                            )
-                            movie.start()
-                            self.preview_img.hide()
-                            self.preview_vid.hide()
-                            self.preview_gif.show()
+                            if hasattr(image, "n_frames"):
+                                print(image.n_frames)
+                                if image.n_frames > 1:
+                                    print("treating as animated image: ", filepath)
+                                    self.preview_gif.setMovie(movie)
+                                    self.resizeEvent(
+                                        QResizeEvent(
+                                            QSize(image.width, image.height),
+                                            QSize(image.width, image.height),
+                                        )
+                                    )
+                                    movie.start()
+                                    self.preview_img.hide()
+                                    self.preview_vid.hide()
+                                    self.preview_gif.show()
 
                         image = None
                         if (
