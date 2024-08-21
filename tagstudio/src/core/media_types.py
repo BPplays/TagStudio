@@ -26,6 +26,7 @@ class MediaType(str, Enum):
     IMAGE_RAW: str = "image_raw"
     IMAGE_VECTOR: str = "image_vector"
     IMAGE: str = "image"
+    IMAGE_ANIMATION: str = "image_animation"
     INSTALLER: str = "installer"
     MATERIAL: str = "material"
     MODEL: str = "model"
@@ -203,6 +204,13 @@ class MediaCategories:
         ".tiff",
         ".webp",
     }
+    _IMAGE_ANIMATION_SET: set[str] = {
+        ".apng",
+        ".png",
+        ".gif",
+        ".jxl",
+        ".webp",
+    }
     _INSTALLER_SET: set[str] = {".appx", ".msi", ".msix"}
     _MATERIAL_SET: set[str] = {".mtl"}
     _MODEL_SET: set[str] = {".3ds", ".fbx", ".obj", ".stl"}
@@ -329,8 +337,13 @@ class MediaCategories:
     )
     IMAGE_TYPES: MediaCategory = MediaCategory(
         media_type=MediaType.IMAGE,
-        extensions=_IMAGE_SET | _IMAGE_RAW_SET | _IMAGE_VECTOR_SET,
+        extensions=_IMAGE_SET | _IMAGE_RAW_SET | _IMAGE_VECTOR_SET | _IMAGE_ANIMATION_SET,
         is_iana=True,
+    )
+    IMAGE_ANIMATION_TYPES: MediaCategory = MediaCategory(
+        media_type=MediaType.IMAGE_ANIMATION,
+        extensions=_IMAGE_ANIMATION_SET,
+        is_iana=False,
     )
     INSTALLER_TYPES: MediaCategory = MediaCategory(
         media_type=MediaType.INSTALLER,
@@ -406,6 +419,7 @@ class MediaCategories:
         FONT_TYPES,
         IMAGE_RAW_TYPES,
         IMAGE_TYPES,
+        IMAGE_ANIMATION_TYPES,
         IMAGE_VECTOR_TYPES,
         INSTALLER_TYPES,
         MATERIAL_TYPES,
