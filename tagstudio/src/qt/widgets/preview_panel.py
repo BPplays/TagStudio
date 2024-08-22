@@ -107,6 +107,23 @@ class PreviewPanel(QWidget):
         self.preview_img.addAction(self.open_file_action)
         self.preview_img.addAction(self.open_explorer_action)
 
+        self.preview_ani_img_fmts = []
+
+        qmovie_formats = QMovie.supportedFormats()
+
+        self.preview_ani_img_fmts = [fmt.data().decode('utf-8') for fmt in qmovie_formats]
+
+        ani_img_priority_order = ['jxl', 'apng', 'png', 'webp', 'gif']
+
+        self.preview_ani_img_fmts.sort(key=lambda x: ani_img_priority_order.index(x) if x in ani_img_priority_order else len(ani_img_priority_order))
+
+        logging.info("supported qmovie image format(s): "+str(self.preview_ani_img_fmts))
+
+        pil_exts = Image.registered_extensions()
+        self.pil_save_exts = {ex for ex, f in pil_exts.items() if f in Image.SAVE}
+
+        logging.info("supported pil save exts: "+str(self.pil_save_exts))
+
         self.preview_ani_img_qbuffer = QBuffer()
         self.preview_ani_img_movie = QMovie()
 
@@ -574,10 +591,18 @@ class PreviewPanel(QWidget):
                                 if image.n_frames > 1:
                                     logging.info("treating as animated image: "+str(filepath.name)+" with: "+str(image.n_frames)+" frames")
 
-                                    if ext != ".webp":
+                                    if not ext in self.preview_ani_img_fmts:
                                         try:
+                                            logging.info("converting image not nativly supported by qt")
                                             webp_buf = io.BytesIO()
-                                            image.save(webp_buf, format='WEBP', lossless=True, save_all=True, loop=0)
+                                            save_ext = ""
+
+                                            for fmt_ext in self.preview_ani_img_fmts:
+                                                if f".{fmt_ext}" in self.pil_save_exts:
+                                                    save_ext = fmt_ext
+                                                    break
+
+                                            image.save(webp_buf, format=save_ext, lossless=True, save_all=True, loop=0)
 
                                             self.set_new_anim_img(webp_buf.getvalue(), image, False)
 
