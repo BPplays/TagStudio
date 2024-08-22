@@ -591,7 +591,7 @@ class PreviewPanel(QWidget):
                                 if image.n_frames > 1:
                                     logging.info("treating as animated image: "+str(filepath.name)+" with: "+str(image.n_frames)+" frames")
 
-                                    if not ext in self.preview_ani_img_fmts:
+                                    if not ext.lstrip(".") in self.preview_ani_img_fmts:
                                         try:
                                             logging.info("converting image not nativly supported by qt")
                                             webp_buf = io.BytesIO()
