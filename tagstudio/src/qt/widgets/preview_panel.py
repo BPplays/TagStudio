@@ -387,6 +387,29 @@ class PreviewPanel(QWidget):
         # logging.info(f'Updating Ratio to: {ratio} #####################################################')
         self.image_ratio = ratio
 
+    def set_new_anim_img(self, data, image, is_path):
+        self.preview_ani_img.setMovie(QMovie())
+        self.preview_ani_img_movie.stop()
+        self.preview_ani_img_movie = QMovie()
+        self.preview_ani_img_qbuffer = QBuffer()
+
+        if not is_path:
+            self.preview_ani_img_qbuffer.setData(data)
+            self.preview_ani_img_qbuffer.open(QBuffer.ReadWrite)
+            self.preview_ani_img_movie = QMovie(self.preview_ani_img_qbuffer)
+
+        else:
+            self.preview_ani_img_movie = QMovie(str(data))
+
+        self.preview_ani_img.setMovie(self.preview_ani_img_movie)
+        self.resizeEvent(
+            QResizeEvent(
+                QSize(image.width, image.height),
+                QSize(image.width, image.height),
+            )
+        )
+        self.preview_ani_img_movie.start()
+
     def update_image_size(self, size: tuple[int, int], ratio: float = None):
         if ratio:
             self.set_image_ratio(ratio)
@@ -556,28 +579,13 @@ class PreviewPanel(QWidget):
                                             webp_buf = io.BytesIO()
                                             image.save(webp_buf, format='WEBP', lossless=True, save_all=True, loop=0)
 
+                                            self.set_new_anim_img(webp_buf.getvalue(), image, False)
 
-                                            self.preview_ani_img.setMovie(QMovie())
-                                            self.preview_ani_img_movie.stop()
-                                            self.preview_ani_img_movie = QMovie()
-                                            self.preview_ani_img_qbuffer = QBuffer()
-
-                                            self.preview_ani_img_qbuffer.setData(webp_buf.getvalue())
-                                            self.preview_ani_img_qbuffer.open(QBuffer.ReadWrite)
-                                            self.preview_ani_img_movie = QMovie(self.preview_ani_img_qbuffer)
                                         except Exception as err:
                                             print(f"error occurred while converting animated image: {err}")
                                     else:
-                                        self.preview_ani_img_movie = QMovie(str(filepath))
+                                        self.set_new_anim_img(str(filepath), image, True)
 
-                                    self.preview_ani_img.setMovie(self.preview_ani_img_movie)
-                                    self.resizeEvent(
-                                        QResizeEvent(
-                                            QSize(image.width, image.height),
-                                            QSize(image.width, image.height),
-                                        )
-                                    )
-                                    self.preview_ani_img_movie.start()
                                     self.preview_img.hide()
                                     self.preview_vid.hide()
                                     self.preview_ani_img.show()
