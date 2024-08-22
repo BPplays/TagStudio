@@ -9,9 +9,10 @@ import typing
 from datetime import datetime as dt
 import cv2
 import rawpy
+import io
 from PIL import Image, UnidentifiedImageError, ImageFont
 from PIL.Image import DecompressionBombError
-from PySide6.QtCore import QModelIndex, Signal, Qt, QSize
+from PySide6.QtCore import QModelIndex, Signal, Qt, QSize, QBuffer, QByteArray
 from PySide6.QtGui import QGuiApplication, QResizeEvent, QAction, QMovie
 from PySide6.QtWidgets import (
     QWidget,
@@ -106,13 +107,13 @@ class PreviewPanel(QWidget):
         self.preview_img.addAction(self.open_file_action)
         self.preview_img.addAction(self.open_explorer_action)
 
-        self.preview_gif = QLabel()
-        self.preview_gif.setMinimumSize(*self.img_button_size)
-        self.preview_gif.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
-        self.preview_gif.setCursor(Qt.CursorShape.ArrowCursor)
-        self.preview_gif.addAction(self.open_file_action)
-        self.preview_gif.addAction(self.open_explorer_action)
-        self.preview_gif.hide()
+        self.preview_ani_img = QLabel()
+        self.preview_ani_img.setMinimumSize(*self.img_button_size)
+        self.preview_ani_img.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
+        self.preview_ani_img.setCursor(Qt.CursorShape.ArrowCursor)
+        self.preview_ani_img.addAction(self.open_file_action)
+        self.preview_ani_img.addAction(self.open_explorer_action)
+        self.preview_ani_img.hide()
 
         self.preview_vid = VideoPlayer(driver)
         self.preview_vid.hide()
@@ -135,8 +136,8 @@ class PreviewPanel(QWidget):
 
         image_layout.addWidget(self.preview_img)
         image_layout.setAlignment(self.preview_img, Qt.AlignmentFlag.AlignCenter)
-        image_layout.addWidget(self.preview_gif)
-        image_layout.setAlignment(self.preview_gif, Qt.AlignmentFlag.AlignCenter)
+        image_layout.addWidget(self.preview_ani_img)
+        image_layout.setAlignment(self.preview_ani_img, Qt.AlignmentFlag.AlignCenter)
         image_layout.addWidget(self.preview_vid)
         image_layout.setAlignment(self.preview_vid, Qt.AlignmentFlag.AlignCenter)
         self.image_container.setMinimumSize(*self.img_button_size)
@@ -418,12 +419,12 @@ class PreviewPanel(QWidget):
         self.preview_vid.resizeVideo(adj_size)
         self.preview_vid.setMaximumSize(adj_size)
         self.preview_vid.setMinimumSize(adj_size)
-        self.preview_gif.setMaximumSize(adj_size)
-        self.preview_gif.setMinimumSize(adj_size)
+        self.preview_ani_img.setMaximumSize(adj_size)
+        self.preview_ani_img.setMinimumSize(adj_size)
         proxy_style = RoundedPixmapStyle(radius=8)
-        self.preview_gif.setStyle(proxy_style)
+        self.preview_ani_img.setStyle(proxy_style)
         self.preview_vid.setStyle(proxy_style)
-        m = self.preview_gif.movie()
+        m = self.preview_ani_img.movie()
         if m:
             m.setScaledSize(adj_size)
 
@@ -495,7 +496,7 @@ class PreviewPanel(QWidget):
             self.preview_img.show()
             self.preview_vid.stop()
             self.preview_vid.hide()
-            self.preview_gif.hide()
+            self.preview_ani_img.hide()
             self.selected = list(self.driver.selected)
             self.add_field_button.setHidden(True)
 
@@ -506,7 +507,7 @@ class PreviewPanel(QWidget):
                 self.preview_img.show()
                 self.preview_vid.stop()
                 self.preview_vid.hide()
-                self.preview_gif.hide()
+                self.preview_ani_img.hide()
                 item: Entry = self.lib.get_entry(self.driver.selected[0][1])
                 # If a new selection is made, update the thumbnail and filepath.
                 if not self.selected or self.selected != self.driver.selected:
@@ -539,12 +540,28 @@ class PreviewPanel(QWidget):
                     ext: str = filepath.suffix.lower()
                     try:
                         if MediaType.IMAGE_ANIMATION in MediaCategories.get_types(ext):
-                            movie = QMovie(str(filepath))
                             image = Image.open(str(filepath))
                             if hasattr(image, "n_frames"):
                                 if image.n_frames > 1:
                                     logging.info("treating as animated image: "+str(filepath.name)+" with: "+str(image.n_frames)+" frames")
-                                    self.preview_gif.setMovie(movie)
+
+                                    if ext != ".webp":
+                                        try:
+                                            webp_buf = io.BytesIO()
+                                            image.save(webp_buf, format='WEBP', save_all=True)
+
+                                            byte_array = QByteArray(webp_buf.getvalue())
+                                            qbuffer = QBuffer()
+                                            qbuffer.setData(byte_array)
+                                            qbuffer.open(QBuffer.ReadOnly)
+
+                                            movie = QMovie(qbuffer)
+                                        except Exception as err:
+                                            print(f"error occurred while converting animated image: {err}")
+                                    else:
+                                        movie = QMovie(str(filepath))
+
+                                    self.preview_ani_img.setMovie(movie)
                                     self.resizeEvent(
                                         QResizeEvent(
                                             QSize(image.width, image.height),
@@ -554,7 +571,7 @@ class PreviewPanel(QWidget):
                                     movie.start()
                                     self.preview_img.hide()
                                     self.preview_vid.hide()
-                                    self.preview_gif.show()
+                                    self.preview_ani_img.show()
 
                         image = None
                         if (
@@ -690,7 +707,7 @@ class PreviewPanel(QWidget):
         # Multiple Selected Items
         elif len(self.driver.selected) > 1:
             self.preview_img.show()
-            self.preview_gif.hide()
+            self.preview_ani_img.hide()
             self.preview_vid.stop()
             self.preview_vid.hide()
             if self.selected != self.driver.selected:
