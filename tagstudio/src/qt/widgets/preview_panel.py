@@ -107,10 +107,8 @@ class PreviewPanel(QWidget):
         self.preview_img.addAction(self.open_file_action)
         self.preview_img.addAction(self.open_explorer_action)
 
-        self.preview_ani_img_qbuffer0 = QBuffer()
-        self.preview_ani_img_qbuffer1 = QBuffer()
-        self.preview_ani_img_qbuffer_use = 0
-        self.movie = QMovie()
+        self.preview_ani_img_qbuffer = QBuffer()
+        self.preview_ani_img_movie = QMovie()
 
         self.preview_ani_img = QLabel()
         self.preview_ani_img.setMinimumSize(*self.img_button_size)
@@ -461,30 +459,12 @@ class PreviewPanel(QWidget):
             for field_item in field_list:
                 self.lib.add_field_to_entry(item_id, field_item.row())
 
-    def set_prev_ani_qbuff(self, inp):
-        self.preview_ani_img.setMovie(QMovie())
-        if self.preview_ani_img_qbuffer_use == 0:
-            self.preview_ani_img_qbuffer0.setData(inp)
-            self.preview_ani_img_qbuffer_use = 1
-            self.movie = QMovie(self.preview_ani_img_qbuffer0)
-            self.preview_ani_img_qbuffer1 = QBuffer()
-        elif self.preview_ani_img_qbuffer_use == 1:
-            self.preview_ani_img_qbuffer1.setData(inp)
-            self.preview_ani_img_qbuffer_use = 0
-            self.movie = QMovie(self.preview_ani_img_qbuffer1)
-            self.preview_ani_img_qbuffer0 = QBuffer()
-        print("puse", self.preview_ani_img_qbuffer_use)
-
     # def update_widgets(self, item: Union[Entry, Collation, Tag]):
     def update_widgets(self):
         """
         Renders the panel's widgets with the newest data from the Library.
         """
 
-        self.movie = QMovie()
-        self.preview_ani_img.setMovie(self.movie)
-        self.preview_ani_img.hide()
-        self.movie.stop()
         logging.info(f"[ENTRY PANEL] UPDATE WIDGETS ({self.driver.selected})")
         self.isOpen = True
         # self.tag_callback = tag_callback if tag_callback else None
@@ -576,21 +556,28 @@ class PreviewPanel(QWidget):
                                             webp_buf = io.BytesIO()
                                             image.save(webp_buf, format='WEBP', lossless=True, save_all=True, loop=0)
 
-                                            self.set_prev_ani_qbuff(webp_buf.getvalue())
-                                            # self.movie = QMovie(self.preview_ani_img_qbuffer)
+
+                                            self.preview_ani_img.setMovie(QMovie())
+                                            self.preview_ani_img_movie.stop()
+                                            self.preview_ani_img_movie = QMovie()
+                                            self.preview_ani_img_qbuffer = QBuffer()
+
+                                            self.preview_ani_img_qbuffer.setData(webp_buf.getvalue())
+                                            self.preview_ani_img_qbuffer.open(QBuffer.ReadWrite)
+                                            self.preview_ani_img_movie = QMovie(self.preview_ani_img_qbuffer)
                                         except Exception as err:
                                             print(f"error occurred while converting animated image: {err}")
                                     else:
-                                        self.movie = QMovie(str(filepath))
+                                        self.preview_ani_img_movie = QMovie(str(filepath))
 
-                                    self.preview_ani_img.setMovie(self.movie)
+                                    self.preview_ani_img.setMovie(self.preview_ani_img_movie)
                                     self.resizeEvent(
                                         QResizeEvent(
                                             QSize(image.width, image.height),
                                             QSize(image.width, image.height),
                                         )
                                     )
-                                    self.movie.start()
+                                    self.preview_ani_img_movie.start()
                                     self.preview_img.hide()
                                     self.preview_vid.hide()
                                     self.preview_ani_img.show()
