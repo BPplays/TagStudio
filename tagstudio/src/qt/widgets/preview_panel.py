@@ -119,6 +119,10 @@ class PreviewPanel(QWidget):
             "apng": "png"
         }
 
+        self.preview_ani_img_pil_map_args = {
+            "gif": {"disposal": 2}
+        }
+
         self.preview_ani_img_pil_known_good = {"webp", "gif"}
 
         self.preview_ani_img_fmts.sort(key=lambda x: ani_img_priority_order.index(x) if x in ani_img_priority_order else len(ani_img_priority_order))
@@ -616,7 +620,8 @@ class PreviewPanel(QWidget):
                                                 anim_failed = True
 
                                             else:
-                                                image.save(save_buf, format=save_ext, lossless=True, save_all=True, loop=0)
+                                                extra_args = self.preview_ani_img_pil_map_args.get(save_ext, {})
+                                                image.save(save_buf, format=save_ext, lossless=True, save_all=True, loop=0, **extra_args)
 
                                                 self.set_new_anim_img(save_buf.getvalue(), image, False)
 
