@@ -543,7 +543,7 @@ class PreviewPanel(QWidget):
                             image = Image.open(str(filepath))
                             if hasattr(image, "n_frames"):
                                 if image.n_frames > 1:
-                                    print("treating as animated image:", filepath, "with:", image.n_frames, "frames")
+                                    logging.info("treating as animated image: "+str(filepath.name)+" with: "+str(image.n_frames)+" frames")
                                     self.preview_gif.setMovie(movie)
                                     self.resizeEvent(
                                         QResizeEvent(
