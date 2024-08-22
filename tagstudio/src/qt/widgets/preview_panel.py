@@ -115,6 +115,12 @@ class PreviewPanel(QWidget):
 
         ani_img_priority_order = ['jxl', 'apng', 'png', 'webp', 'gif']
 
+        self.preview_ani_img_pil_map = {
+            "apng": "png"
+        }
+
+        self.preview_ani_img_pil_known_good = {"webp", "gif"}
+
         self.preview_ani_img_fmts.sort(key=lambda x: ani_img_priority_order.index(x) if x in ani_img_priority_order else len(ani_img_priority_order))
 
         logging.info("supported qmovie image format(s): "+str(self.preview_ani_img_fmts))
@@ -586,6 +592,7 @@ class PreviewPanel(QWidget):
                     ext: str = filepath.suffix.lower()
                     try:
                         if MediaType.IMAGE_ANIMATION in MediaCategories.get_types(ext):
+                            anim_failed = False
                             image = Image.open(str(filepath))
                             if hasattr(image, "n_frames"):
                                 if image.n_frames > 1:
@@ -594,26 +601,35 @@ class PreviewPanel(QWidget):
                                     if not ext.lstrip(".") in self.preview_ani_img_fmts:
                                         try:
                                             logging.info("converting image not nativly supported by qt")
-                                            webp_buf = io.BytesIO()
+                                            save_buf = io.BytesIO()
                                             save_ext = ""
 
                                             for fmt_ext in self.preview_ani_img_fmts:
-                                                if f".{fmt_ext}" in self.pil_save_exts:
-                                                    save_ext = fmt_ext
-                                                    break
+                                                fmt_ext = self.preview_ani_img_pil_map.get(fmt_ext, fmt_ext)
 
-                                            image.save(webp_buf, format=save_ext, lossless=True, save_all=True, loop=0)
+                                                if fmt_ext in self.preview_ani_img_pil_known_good:
+                                                    if f".{fmt_ext}" in self.pil_save_exts:
+                                                        save_ext = fmt_ext
+                                                        break
 
-                                            self.set_new_anim_img(webp_buf.getvalue(), image, False)
+                                            if save_ext == "":
+                                                anim_failed = True
+
+                                            else:
+                                                image.save(save_buf, format=save_ext, lossless=True, save_all=True, loop=0)
+
+                                                self.set_new_anim_img(save_buf.getvalue(), image, False)
 
                                         except Exception as err:
+                                            anim_failed = True
                                             print(f"error occurred while converting animated image: {err}")
                                     else:
                                         self.set_new_anim_img(str(filepath), image, True)
 
-                                    self.preview_img.hide()
-                                    self.preview_vid.hide()
-                                    self.preview_ani_img.show()
+                                    if not anim_failed:
+                                        self.preview_img.hide()
+                                        self.preview_vid.hide()
+                                        self.preview_ani_img.show()
 
                         image = None
                         if (
