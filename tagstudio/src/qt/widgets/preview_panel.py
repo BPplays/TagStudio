@@ -111,35 +111,41 @@ class PreviewPanel(QWidget):
 
         qmovie_formats = QMovie.supportedFormats()
 
-        self.preview_ani_img_fmts = [fmt.data().decode('utf-8') for fmt in qmovie_formats]
+        self.preview_ani_img_fmts = [
+            fmt.data().decode("utf-8") for fmt in qmovie_formats
+        ]
 
-        ani_img_priority_order = ['jxl', 'apng', 'png', 'webp', 'gif']
+        ani_img_priority_order = ["jxl", "apng", "png", "webp", "gif"]
 
-        self.preview_ani_img_pil_map = {
-            "apng": "png"
-        }
+        self.preview_ani_img_pil_map = {"apng": "png"}
 
-        self.preview_ani_img_pil_map_args = {
-            "gif": {"disposal": 2}
-        }
+        self.preview_ani_img_pil_map_args = {"gif": {"disposal": 2}}
 
         self.preview_ani_img_pil_known_good = {"webp", "gif"}
 
-        self.preview_ani_img_fmts.sort(key=lambda x: ani_img_priority_order.index(x) if x in ani_img_priority_order else len(ani_img_priority_order))
+        self.preview_ani_img_fmts.sort(
+            key=lambda x: ani_img_priority_order.index(x)
+            if x in ani_img_priority_order
+            else len(ani_img_priority_order)
+        )
 
-        logging.info("supported qmovie image format(s): "+str(self.preview_ani_img_fmts))
+        logging.info(
+            "supported qmovie image format(s): " + str(self.preview_ani_img_fmts)
+        )
 
         pil_exts = Image.registered_extensions()
         self.pil_save_exts = {ex for ex, f in pil_exts.items() if f in Image.SAVE}
 
-        logging.info("supported pil save exts: "+str(self.pil_save_exts))
+        logging.info("supported pil save exts: " + str(self.pil_save_exts))
 
         self.preview_ani_img_qbuffer = QBuffer()
         self.preview_ani_img_movie = QMovie()
 
         self.preview_ani_img = QLabel()
         self.preview_ani_img.setMinimumSize(*self.img_button_size)
-        self.preview_ani_img.setContextMenuPolicy(Qt.ContextMenuPolicy.ActionsContextMenu)
+        self.preview_ani_img.setContextMenuPolicy(
+            Qt.ContextMenuPolicy.ActionsContextMenu
+        )
         self.preview_ani_img.setCursor(Qt.CursorShape.ArrowCursor)
         self.preview_ani_img.addAction(self.open_file_action)
         self.preview_ani_img.addAction(self.open_explorer_action)
@@ -292,8 +298,6 @@ class PreviewPanel(QWidget):
         root_layout = QHBoxLayout(self)
         root_layout.setContentsMargins(0, 0, 0, 0)
         root_layout.addWidget(splitter)
-
-
 
     def fill_libs_widget(self, layout: QVBoxLayout):
         settings = self.driver.settings
@@ -600,19 +604,37 @@ class PreviewPanel(QWidget):
                             image = Image.open(str(filepath))
                             if hasattr(image, "n_frames"):
                                 if image.n_frames > 1:
-                                    logging.info("treating as animated image: "+str(filepath.name)+" with: "+str(image.n_frames)+" frames")
+                                    logging.info(
+                                        "treating as animated image: "
+                                        + str(filepath.name)
+                                        + " with: "
+                                        + str(image.n_frames)
+                                        + " frames"
+                                    )
 
                                     if not ext.lstrip(".") in self.preview_ani_img_fmts:
                                         try:
-                                            logging.info("converting image not nativly supported by qt")
+                                            logging.info(
+                                                "converting image not nativly supported by qt"
+                                            )
                                             save_buf = io.BytesIO()
                                             save_ext = ""
 
                                             for fmt_ext in self.preview_ani_img_fmts:
-                                                fmt_ext = self.preview_ani_img_pil_map.get(fmt_ext, fmt_ext)
+                                                fmt_ext = (
+                                                    self.preview_ani_img_pil_map.get(
+                                                        fmt_ext, fmt_ext
+                                                    )
+                                                )
 
-                                                if fmt_ext in self.preview_ani_img_pil_known_good:
-                                                    if f".{fmt_ext}" in self.pil_save_exts:
+                                                if (
+                                                    fmt_ext
+                                                    in self.preview_ani_img_pil_known_good
+                                                ):
+                                                    if (
+                                                        f".{fmt_ext}"
+                                                        in self.pil_save_exts
+                                                    ):
                                                         save_ext = fmt_ext
                                                         break
 
@@ -620,16 +642,31 @@ class PreviewPanel(QWidget):
                                                 anim_failed = True
 
                                             else:
-                                                extra_args = self.preview_ani_img_pil_map_args.get(save_ext, {})
-                                                image.save(save_buf, format=save_ext, lossless=True, save_all=True, loop=0, **extra_args)
+                                                extra_args = self.preview_ani_img_pil_map_args.get(
+                                                    save_ext, {}
+                                                )
+                                                image.save(
+                                                    save_buf,
+                                                    format=save_ext,
+                                                    lossless=True,
+                                                    save_all=True,
+                                                    loop=0,
+                                                    **extra_args,
+                                                )
 
-                                                self.set_new_anim_img(save_buf.getvalue(), image, False)
+                                                self.set_new_anim_img(
+                                                    save_buf.getvalue(), image, False
+                                                )
 
                                         except Exception as err:
                                             anim_failed = True
-                                            print(f"error occurred while converting animated image: {err}")
+                                            print(
+                                                f"error occurred while converting animated image: {err}"
+                                            )
                                     else:
-                                        self.set_new_anim_img(str(filepath), image, True)
+                                        self.set_new_anim_img(
+                                            str(filepath), image, True
+                                        )
 
                                     if not anim_failed:
                                         self.preview_img.hide()

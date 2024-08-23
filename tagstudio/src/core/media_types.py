@@ -337,7 +337,10 @@ class MediaCategories:
     )
     IMAGE_TYPES: MediaCategory = MediaCategory(
         media_type=MediaType.IMAGE,
-        extensions=_IMAGE_SET | _IMAGE_RAW_SET | _IMAGE_VECTOR_SET | _IMAGE_ANIMATION_SET,
+        extensions=_IMAGE_SET
+        | _IMAGE_RAW_SET
+        | _IMAGE_VECTOR_SET
+        | _IMAGE_ANIMATION_SET,
         is_iana=True,
     )
     IMAGE_ANIMATION_TYPES: MediaCategory = MediaCategory(
