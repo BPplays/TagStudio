@@ -682,19 +682,19 @@ class PreviewPanel(QWidget):
                                             self.ani_img_buffer.setData(ba)
 
 
-                                    movie = QMovie(self.ani_img_buffer, QByteArray())
-                                    self.preview_ani_img.setMovie(movie)
-                                    movie.start()
+                                        movie = QMovie(self.ani_img_buffer, QByteArray())
+                                        self.preview_ani_img.setMovie(movie)
+                                        movie.start()
 
-                                    self.resizeEvent(
-                                        QResizeEvent(
-                                            QSize(image.width, image.height),
-                                            QSize(image.width, image.height),
+                                        self.resizeEvent(
+                                            QResizeEvent(
+                                                QSize(image.width, image.height),
+                                                QSize(image.width, image.height),
+                                            )
                                         )
-                                    )
-                                    self.preview_img.hide()
-                                    self.preview_vid.hide()
-                                    self.preview_ani_img.show()
+                                        self.preview_img.hide()
+                                        self.preview_vid.hide()
+                                        self.preview_ani_img.show()
 
                         image = None
                         if (
